@@ -1,0 +1,10 @@
+{
+  "name": "clipfarm",
+  "version": "0.1.0",
+  "description": "Turn gameplay captures into vertical clips: finds the best moments in your Xbox, PS5 or PC recordings, edits them with Remotion, and posts them with Claude in Chrome. Made for GTA 6, works with any game.",
+  "author": { "name": "Vedant Soni", "url": "https://github.com/VedSoni-dev" },
+  "homepage": "https://github.com/VedSoni-dev/clipfarm",
+  "repository": "https://github.com/VedSoni-dev/clipfarm",
+  "license": "MIT",
+  "keywords": ["gaming", "clips", "gta6", "remotion", "video", "reels", "shorts"]
+}

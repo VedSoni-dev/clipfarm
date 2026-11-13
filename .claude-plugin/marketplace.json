@@ -1,0 +1,17 @@
+{
+  "name": "clipfarm",
+  "owner": {
+    "name": "Vedant Soni",
+    "url": "https://github.com/VedSoni-dev"
+  },
+  "plugins": [
+    {
+      "name": "clipfarm",
+      "source": "./",
+      "description": "Turn gameplay captures into vertical clips for Reels and Shorts.",
+      "version": "0.1.0",
+      "category": "productivity"
+    }
+  ],
+  "description": "Clipfarm: turn gameplay captures into vertical clips for Reels and Shorts."
+}
