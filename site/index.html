@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en" data-type="software" data-radius="sharp" data-ground="sky" data-buttons="tonal" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clipfarm: gameplay reel editor for Claude Code</title>
+<meta name="description" content="A free, open-source Claude Code plugin that finds the best moments in your Xbox, PS5 or PC captures and edits them into 9:16 reels on your own computer.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Clipfarm: gameplay reel editor for Claude Code">
+<meta property="og:description" content="Finds the moments worth posting in your game captures and cuts each into a vertical reel with a hook on top.">
+<meta property="og:image" content="https://clipfarm.vedantsoni.com/share.jpg">
+<meta property="og:url" content="https://clipfarm.vedantsoni.com/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#18191b">
+<link rel="canonical" href="https://clipfarm.vedantsoni.com/">
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+:root {
+  --p-bg: #18191b; --p-surface: #222427; --p-ink: #eff0f1; --p-muted: #9c9ea3;
+  --p-accent: #ff4a1f; --p-accent-ink: #18191b; --p-action: #ff4a1f; --p-action-ink: #18191b;
+  --p-inv-bg: #eff0f1; --p-inv-surface: #dedfe0; --p-inv-ink: #18191b; --p-inv-muted: #5b5c5e;
+  --p-inv-accent: #18191b; --p-inv-accent-ink: #eff0f1; --p-inv-action: #18191b; --p-inv-action-ink: #eff0f1;
+  --font-display: "Schibsted Grotesk", system-ui, sans-serif;
+  --font-text: "Schibsted Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 400;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.042em;
+  --ly-scale: 0.98;
+}
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/diagrams/diagram.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/letters-assemble/moment.js">
+<link rel="modulepreload" href="assets/moments/liquid-type/moment.js">
+<!-- page CSS: only inside the visuals (the hero's terminal, the run report, the reels, the upload forms, the install terminal) -->
+<style>
+  /* the hero's sub-line in the ink (7:1), and the frame's pause disc at its top, clear of the fade */
+  .hero--centred .hero__lead { color: var(--ink); }
+  .hero--centred .hero__window > .loop-pause:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; box-shadow: 0 0 0 6px #eff0f1; }
+  #punchline .mo-la__sub { color: var(--ink); }
+  /* the upright tablet: the two statements set larger, so each fills its tall screen */
+  @media (min-width: 640px) and (max-width: 1023px) { #punchline .mo-la__type { font-size: 15vw; } #local .mo-lt__type { font-size: 13vw; } }
+  @media (max-width: 639px) { #faq .faq__item:nth-child(n + 4) { display: none; } }
+  @media (max-width: 379px) { #faq .faq__item:nth-child(n + 3) { display: none; } }
+  @media (min-width: 640px) { .hero--centred .hero__window > .loop-pause { bottom: auto; top: 12px; } }
+
+  /* the statement under the liquid headline: clear of its descenders */
+  #local .mo-lt__type + p { margin-top: var(--s-7); }
+  #local .local-facts { margin-top: var(--s-8); row-gap: var(--s-5); }
+  #local .local-facts .ic-tile { --tile: 44px; color: #18191b; }
+  #local .local-facts .ic-tile svg, #local .local-facts .ic-tile img { width: 22px; height: 22px; }
+
+  /* hero: the Claude Code session in the lit frame */
+  .term { background: #121315; color: #e6e7e9; border-radius: 12px; overflow: hidden; font: 400 14px/1.5 var(--font-text);
+    box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 30px 70px -30px rgb(0 0 0 / .8); text-align: left; }
+  .term__bar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-bottom: 1px solid rgb(255 255 255 / .07); font-size: 13px; color: #9a9da2; }
+  .term__bar b { color: #e6e7e9; font-weight: 500; } .term__bar .sp { flex: 1; }
+  .term__dots { display: flex; gap: 6px; } .term__dots i { width: 10px; height: 10px; border-radius: 50%; background: #3a3d42; }
+  .term__body { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 420px; }
+  .term__files { border-right: 1px solid rgb(255 255 255 / .07); padding: 12px 10px; display: grid; align-content: start; gap: 2px; }
+  .term__files .h { padding: 2px 8px 8px; font-size: 13px; color: #8b8f95; }
+  .term__files .f { display: flex; justify-content: space-between; gap: 8px; padding: 7px 8px; border-radius: 6px; font: 400 13px/1.3 var(--font-mono); color: #c9cbcf; }
+  .term__files .f time { color: #8b8f95; }
+  .term__files .f.is-sum { margin-top: 6px; border-top: 1px solid rgb(255 255 255 / .07); border-radius: 0; color: #e6e7e9; }
+  .term__log { display: grid; align-content: start; gap: 10px; padding: 16px 18px; font: 400 13px/1.55 var(--font-mono); min-width: 0; }
+  .term__log .you { color: #e6e7e9; padding: 10px 12px; background: rgb(255 255 255 / .05); border-radius: 6px; }
+  .term__log .you::before { content: "> "; color: #8b8f95; }
+  .term__log .out { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; color: #c9cbcf; }
+  .term__log .out::before { content: ""; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #5fc488; }
+  .term__log .out.is-claude::before { background: var(--p-accent); }
+  .term__log .acts { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 22px; }
+  .term__log .acts span { height: 28px; padding: 0 10px; border-radius: 6px; display: inline-flex; align-items: center; font: 500 13px/1 var(--font-text); background: rgb(255 255 255 / .08); color: #e6e7e9; }
+  @media (max-width: 1279px) { .term__body { grid-template-columns: 1fr; } .term__files { display: none; } }
+  @media (max-width: 639px) { .term__bar .sp ~ span { display: none; } .term__log { padding: 12px 14px; font-size: 13px; } .term__log .is-scan { display: none; } }
+
+  /* the run report: the moments list beside the open moment */
+  .app.ui { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-top: var(--s-7); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+  .app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+  .app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+  @media (min-width: 1024px) and (max-width: 1279px) { .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+  @media (max-width: 1023px) {
+    .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+    .app > .app__pane--list { max-height: 252px; }
+    .app .ui-win__row:nth-child(n + 5) { display: none; }
+    .app > .app__pane--list::after { display: none; }
+    .app .ui-win__side { display: none; }
+    .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+    .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+  }
+  @media (max-width: 639px) {
+    .app.ui { grid-template-rows: minmax(0, 1fr); }
+    .app > .app__pane--list { display: none; }
+    .app > .app__pane + .app__pane { border-top: 0; }
+  }
+  .ui-win .ui-avatar.mo { font: 500 11px/1 var(--font-mono); }
+  .ui-win__st.is-pick { color: var(--u-ink); background: color-mix(in oklab, #ff4a1f 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, #ff4a1f 45%, transparent); }
+  .ui-win__st.is-pick::before { background: #ff4a1f; opacity: 1; }
+  .pick { display: grid; align-content: start; gap: 14px; padding: 0 0 24px; color: var(--u-ink); font: 400 13px/1.45 var(--font-text); }
+  .pick__head { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px; border-bottom: 1px solid var(--u-line); }
+  .pick__head b { font-weight: 500; } .pick__head .sp { flex: 1; } .pick__head span { color: var(--u-muted); }
+  .pick__chip { height: 24px; padding: 0 10px; border-radius: 99px; display: inline-flex; align-items: center; font-weight: 500; color: var(--u-ink); background: color-mix(in oklab, #ff4a1f 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, #ff4a1f 45%, transparent); }
+  .pick__curve { margin: 0 18px; }
+  .pick__curve .lab { display: flex; justify-content: space-between; color: var(--u-muted); font-size: 12.5px; margin-bottom: 4px; }
+  .pick__curve svg { display: block; width: 100%; height: 120px; overflow: visible; }
+  .pick__curve .area { fill: color-mix(in oklab, var(--u-ink) 7%, transparent); }
+  .pick__curve .line { fill: none; stroke: color-mix(in oklab, var(--u-ink) 55%, transparent); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .pick__curve .win { fill: color-mix(in oklab, #ff4a1f 18%, transparent); }
+  .pick__curve .pk { stroke: var(--u-ink); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; }
+  .pick__curve .pk.is-on { stroke: #ff4a1f; stroke-dasharray: none; stroke-width: 2; }
+  .pick__marks { position: relative; height: 22px; margin-top: 6px; font: 500 12.5px/1 var(--font-mono); color: var(--u-muted); }
+  .pick__marks span { position: absolute; transform: translateX(-50%); padding: 4px 6px; border-radius: 4px; background: var(--u-fill-2); }
+  .pick__marks span.is-on { background: #ff4a1f; color: #18191b; }
+  .pick__grid { margin: 0 18px; border-radius: 8px; overflow: hidden; background: #0f1011; }
+  .pick__grid img { display: block; width: 100%; height: auto; }
+  .pick__edit { margin: 0 18px; padding: 12px 14px; border-radius: 8px; background: var(--u-fill); border: 1px solid var(--u-line); font: 400 12.5px/1.7 var(--font-mono); color: var(--u-ink); white-space: pre-wrap; }
+  .pick__edit i { font-style: normal; color: var(--u-muted); }
+  @media (max-width: 639px) { .pick__head span { display: none; } .pick__curve svg { height: 90px; } }
+
+  /* the five reels, in one row across the wrap */
+  .reels { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-7); }
+  .reels video { display: block; width: 100%; aspect-ratio: 9 / 16; height: auto; border-radius: var(--r-lg); background: #121315; object-fit: cover; }
+  .reels > .loop-pause { right: 12px; bottom: 12px; }
+  @media (max-width: 1023px) { .reels { grid-template-columns: repeat(3, minmax(0, 1fr)); } .reels video:nth-of-type(n + 4) { display: none; } }
+  @media (max-width: 639px) { .reels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); } .reels video:nth-of-type(n + 3) { display: none; } }
+
+  /* the upload forms: YouTube and Instagram, filled in, the last button left for you */
+  .post-frame { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin-top: var(--s-7); height: 420px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent); mask-image: linear-gradient(to bottom, #000 80%, transparent); }
+  .post-frame::before { display: none; }
+  .post-frame { align-items: stretch; }
+  .upl { background: #fff; color: #18191b; border-radius: 12px; font: 400 14px/1.45 var(--font-text); box-shadow: 0 0 0 1px rgb(0 0 0 / .06), 0 24px 60px -30px rgb(0 0 0 / .55); overflow: hidden; }
+  .upl__bar { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 18px; border-bottom: 1px solid #ebecee; font-weight: 500; }
+  .upl__bar img { width: 24px; height: 24px; } .upl__bar .sp { flex: 1; } .upl__bar small { font: 400 13px/1 var(--font-text); color: #5d6066; }
+  .upl__body { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; padding: 18px; }
+  .upl__body video, .upl__body img.thumb { width: 112px; aspect-ratio: 9 / 16; height: auto; border-radius: 8px; object-fit: cover; background: #121315; }
+  .upl__fields { display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .upl__f { padding: 0 0 8px; border-bottom: 1px solid #e3e5e8; }
+  .upl__f small { display: block; font-size: 12.5px; color: #5d6066; }
+  .upl__f p { margin: 2px 0 0; color: #18191b; }
+  .upl__go { height: 32px; padding: 0 14px; border-radius: 99px; display: inline-flex; align-items: center; font-weight: 500; color: #fff; background: #18191b; box-shadow: 0 0 0 3px #fff, 0 0 0 5px #ff4a1f; }
+  @media (max-width: 1023px) { .post-frame { grid-template-columns: 1fr; } .post-frame .upl + .upl { display: none; } }
+  @media (max-width: 639px) { .post-frame { height: 340px; } .upl__body { grid-template-columns: 80px minmax(0, 1fr); } .upl__body video, .upl__body img.thumb { width: 80px; } .upl__f.is-tags { display: none; } }
+
+  /* the README link's GitHub mark */
+  .link--icon { display: inline-flex; align-items: center; gap: 10px; }
+
+  /* the install terminal: the two lines and the first ask, each with its copy button */
+  .inst { display: grid; align-content: start; gap: 12px; padding: 20px; font: 400 14px/1.5 var(--font-mono); color: #e6e7e9; }
+  .inst__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border-radius: 8px; background: rgb(255 255 255 / .05); border: 1px solid rgb(255 255 255 / .08); }
+  .inst__row code { font: inherit; overflow-wrap: anywhere; }
+  .inst__row code::before { content: "> "; color: #8b8f95; }
+  .inst__note { margin: 6px 0 0; padding-left: 2px; font: 400 13px/1.5 var(--font-text); color: #9a9da2; }
+  .inst .btn svg { width: 14px; height: 14px; margin-right: 8px; }
+  .inst-frame { padding: var(--s-7); align-items: flex-start; }
+  @media (max-width: 1279px) { .inst-frame { padding: var(--s-5); } .inst { gap: 8px; padding: 14px; } .inst__ask { display: none; } }
+  .inst-frame::before { display: none; }
+  .inst__ask { padding: 10px 14px; border-radius: 8px; border: 1px dashed rgb(255 255 255 / .14); color: #c9cbcf; }
+  .inst__ask::before { content: "> "; color: #8b8f95; }
+  .inst-frame .term { width: 100%; }
+  @media (max-width: 639px) { .inst-frame { padding: var(--s-4); } .inst { padding: 14px; font-size: 13px; } .inst__row { grid-template-columns: 1fr; } .inst .btn { width: 100%; } }
+</style>
+</head>
+<body>
+<!-- type: software (a developer tool: a Claude Code plugin; site-kind software)
+     deal: hero centred, nav nav-centre, close close-type, footer footer-columns, rhythm dark-band (the reels on the inverse ground),
+           buttons tonal, mark ring, palette graphite-safety-orange, type schibsted, radius sharp, ground sky,
+           effect gradient-mesh (the hero frame), grounds none
+     moments: letters-assemble (#punchline, the statement before the reels), liquid-type (#local, the statement before install) -->
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top"><span class="mark" data-mark="ring" aria-hidden="true"></span>Clipfarm</a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="#run">Report</a></div>
+      <div class="nav__item">
+        <a class="nav__link" href="#capture">Consoles <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <div class="menu-col span-3">
+              <p class="t-label">Clips in</p>
+              <a href="#capture">Xbox<span>Automatic, through OneDrive</span></a>
+              <a href="#capture">PS5<span>One tap in the PlayStation App</span></a>
+              <a href="#capture">PC<span>Your Game Bar captures folder</span></a>
+            </div>
+            <div class="menu-col span-3">
+              <p class="t-label">Reels out</p>
+              <a href="#reels">Five reels<span>Cut from one real run</span></a>
+              <a href="#post">YouTube and Instagram<span>Filled in, you press Publish</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav__item"><a class="nav__link" href="#reels">Reels</a></div>
+      <div class="nav__item"><a class="nav__link" href="#faq">Questions</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="https://github.com/VedSoni-dev/clipfarm">GitHub</a>
+      <a class="btn btn--primary" href="#install">Install the plugin</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text">
+      <div class="hero__c">
+        <a class="pill" href="#reels"><span>Version 0.2.0, MIT licence</span><span class="muted">See five reels it made</span></a>
+        <h1 id="hero-h">Gameplay reel editor for Claude Code</h1>
+        <p class="hero__lead">Clipfarm finds the moments worth posting in your Xbox, PS5 or PC captures and cuts each into a 9:16 reel with a hook on top. Free and open source.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="#install">Install the plugin<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="https://github.com/VedSoni-dev/clipfarm">View on GitHub</a></div>
+      </div>
+      <div class="hero__window" data-fx="gradient-mesh" data-fx-seed="11" role="img" aria-label="Claude Code running Clipfarm: six GTA V clips scanned, 16 moments found, five picked and rendered as reels">
+        <div class="ly-piece term" aria-hidden="true">
+          <div class="term__bar"><span class="term__dots"><i></i><i></i><i></i></span><span><b>Claude Code</b> · ~/Movies/Clipfarm</span><span class="sp"></span><span>clipfarm 0.2.0</span></div>
+          <div class="term__body">
+            <div class="term__files">
+              <div class="h">inbox</div>
+              <div class="f"><span>ut-gtav-1.mp4</span><time>2:35</time></div>
+              <div class="f"><span>ut-gtav-2.mp4</span><time>2:53</time></div>
+              <div class="f"><span>ut-gtav-3.mp4</span><time>2:03</time></div>
+              <div class="f"><span>ut-gtav-4.mp4</span><time>2:03</time></div>
+              <div class="f"><span>ut-gtav-5.mp4</span><time>3:16</time></div>
+              <div class="f"><span>ut-gtav-6.mp4</span><time>3:56</time></div>
+              <div class="f is-sum"><span>6 clips</span><time>16:46</time></div>
+            </div>
+            <div class="term__log" data-ly-steps="900">
+              <div class="you">Use clipfarm: find the best moments in today's GTA clips and make them into reels.</div>
+              <div class="out is-scan" data-step>Scanned 6 clips (16 min 46 s) and found 16 moments.</div>
+              <div class="out is-claude" data-step>Picked 5 from their frame grids and rendered them at 1080×1920.</div>
+              <div class="acts" data-step><span>report.html</span><span>5 reels in runs/sharp/out</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="section" id="run" aria-labelledby="run-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="run-h">One report for every Clipfarm run</h2>
+        <div class="span-6 start-7 stack-4">
+          <p>ffmpeg scores every half second for sudden noise, loudness and motion, and drops cutscenes. Claude looks at each moment's frame grid, keeps the ones that read on a phone and writes the edit.</p>
+          <p><a class="link" href="#reels">See the five reels</a></p>
+        </div>
+      </div>
+      <div class="ui app fill" role="img" aria-label="Clipfarm's run report: 16 moments from six clips, five of them picked; moment 7 open with its loudness curve, its frame grid and the hook Claude wrote" data-ui-pause-host>
+        <div class="app__pane app__pane--list">
+          <div class="ui ui-panel ui-win" data-ui="window" data-open="Queued" data-work="Judging" data-done="Picked">
+            <div class="ui-win__bar">
+              <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="ui-win__crumb">Run sharp <i>/</i> <b>Moments</b></span>
+              <span class="ui-spacer"></span>
+              <span class="ui-win__search" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span class="ui-win__ph">Search</span><span class="ui-kbd">/</span></span>
+            </div>
+            <div class="ui-win__body">
+              <nav class="ui-win__side" aria-hidden="true">
+                <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2 12.5 5.5 6l3 4 2-2.5 3.5 5"/></svg>Moments<em>16</em></span>
+                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg>Picked<em>5</em></span>
+                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M5 11 11 5"/></svg>Skipped<em>11</em></span>
+                <span class="ui-win__label">Clips</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>ut-gtav-2</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>ut-gtav-4</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>ut-gtav-5</span>
+              </nav>
+              <div class="ui-win__main">
+                <div class="ui-win__cols" aria-hidden="true"><span>Moment</span><span>Window</span><span>Status</span><span>Score</span></div>
+                <ul class="ui-win__rows">
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="2">m1</span><span class="ui-win__who">ut-gtav-2</span><span class="ui-win__sub">0:35 to 0:44</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.85</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="5">m2</span><span class="ui-win__who">ut-gtav-6</span><span class="ui-win__sub">0:20 to 0:29</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.83</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="1">m3</span><span class="ui-win__who">ut-gtav-1</span><span class="ui-win__sub">0:07 to 0:16</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.83</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m4</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">1:46 to 1:55</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.81</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="3">m5</span><span class="ui-win__who">ut-gtav-4</span><span class="ui-win__sub">0:07 to 0:16</span><span class="ui-win__st is-pick" data-st>Picked</span><span class="ui-win__age">0.80</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m6</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">0:53 to 1:02</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.79</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="2">m7</span><span class="ui-win__who">ut-gtav-2</span><span class="ui-win__sub">0:52 to 1:01</span><span class="ui-win__st is-pick" data-st>Picked</span><span class="ui-win__age">0.76</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="5">m8</span><span class="ui-win__who">ut-gtav-6</span><span class="ui-win__sub">2:06 to 2:15</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.76</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="5">m9</span><span class="ui-win__who">ut-gtav-6</span><span class="ui-win__sub">2:16 to 2:25</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.75</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="1">m10</span><span class="ui-win__who">ut-gtav-1</span><span class="ui-win__sub">0:18 to 0:27</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.75</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m11</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">1:07 to 1:16</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.74</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m12</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">0:09 to 0:18</span><span class="ui-win__st is-pick" data-st>Picked</span><span class="ui-win__age">0.74</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="3">m13</span><span class="ui-win__who">ut-gtav-4</span><span class="ui-win__sub">0:18 to 0:27</span><span class="ui-win__st is-pick" data-st>Picked</span><span class="ui-win__age">0.68</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="2">m14</span><span class="ui-win__who">ut-gtav-2</span><span class="ui-win__sub">0:21 to 0:30</span><span class="ui-win__st is-pick" data-st>Picked</span><span class="ui-win__age">0.66</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m15</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">0:17 to 0:26</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.65</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar mo" data-tone="4">m16</span><span class="ui-win__who">ut-gtav-5</span><span class="ui-win__sub">1:16 to 1:25</span><span class="ui-win__st" data-st>Skipped</span><span class="ui-win__age">0.63</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app__pane app__pane--open">
+          <div class="ui-panel pick" aria-hidden="true">
+            <div class="pick__head"><b>m7</b><span>ut-gtav-2.mp4 · 2:53</span><span class="sp"></span><em class="pick__chip">Picked, reel 1</em></div>
+            <div class="pick__curve">
+              <div class="lab"><span>Loudness and motion, every half second</span><span>0:00 to 2:53</span></div>
+              <svg viewBox="0 0 1000 160" preserveAspectRatio="none">
+                <rect class="win" x="298.9" y="0" width="52" height="160"/>
+                <path class="area" d="M0.0 118.2 L5.8 135.2 L11.6 118.6 L17.3 103.6 L23.1 88.6 L28.9 97.2 L34.7 122.2 L40.4 126.6 L46.2 138.7 L52.0 133.6 L57.8 128.9 L63.5 97.0 L69.3 102.8 L75.1 123.2 L80.9 121.0 L86.6 100.1 L92.4 122.1 L98.2 131.8 L104.0 122.2 L109.7 97.5 L115.5 97.0 L121.3 108.3 L127.1 117.0 L132.8 102.2 L138.6 105.0 L144.4 120.8 L150.2 83.2 L155.9 65.6 L161.7 109.0 L167.5 103.5 L173.3 77.5 L179.0 78.5 L184.8 112.7 L190.6 120.3 L196.4 90.7 L202.1 84.9 L207.9 97.8 L213.7 100.1 L219.5 111.7 L225.3 94.5 L231.0 35.1 L236.8 90.9 L242.6 109.0 L248.4 110.9 L254.1 115.0 L259.9 114.0 L265.7 122.8 L271.5 105.5 L277.2 113.5 L283.0 97.8 L288.8 107.3 L294.6 69.5 L300.3 76.8 L306.1 119.9 L311.9 95.2 L317.7 82.2 L323.4 94.6 L329.2 51.5 L335.0 83.7 L340.8 113.0 L346.5 100.8 L352.3 104.3 L358.1 81.8 L363.9 74.5 L369.6 120.4 L375.4 128.2 L381.2 115.9 L387.0 94.7 L392.7 93.0 L398.5 98.8 L404.3 116.0 L410.1 116.8 L415.8 100.9 L421.6 81.4 L427.4 82.4 L433.2 88.6 L439.0 106.3 L444.7 108.1 L450.5 97.9 L456.3 101.2 L462.1 98.2 L467.8 103.1 L473.6 99.5 L479.4 93.1 L485.2 83.1 L490.9 107.2 L496.7 97.5 L502.5 91.2 L508.3 95.5 L514.0 105.4 L519.8 117.9 L525.6 112.6 L531.4 102.7 L537.1 117.0 L542.9 122.0 L548.7 90.6 L554.5 99.0 L560.2 113.5 L566.0 108.6 L571.8 138.9 L577.6 130.2 L583.3 84.2 L589.1 118.2 L594.9 145.2 L600.7 132.2 L606.4 73.7 L612.2 109.4 L618.0 130.2 L623.8 121.0 L629.5 86.0 L635.3 94.6 L641.1 88.5 L646.9 84.7 L652.7 126.3 L658.4 139.0 L664.2 116.6 L670.0 110.0 L675.8 135.7 L681.5 123.5 L687.3 80.2 L693.1 95.2 L698.9 117.4 L704.6 110.3 L710.4 111.7 L716.2 112.4 L722.0 116.0 L727.7 107.6 L733.5 91.3 L739.3 93.7 L745.1 112.7 L750.8 132.1 L756.6 108.8 L762.4 106.4 L768.2 138.3 L773.9 129.0 L779.7 120.4 L785.5 120.9 L791.3 128.0 L797.0 125.1 L802.8 119.7 L808.6 119.5 L814.4 96.6 L820.1 96.5 L825.9 114.8 L831.7 136.1 L837.5 136.6 L843.2 138.7 L849.0 144.9 L854.8 131.0 L860.6 128.2 L866.4 130.7 L872.1 130.6 L877.9 133.2 L883.7 131.2 L889.5 115.0 L895.2 132.2 L901.0 132.3 L906.8 113.9 L912.6 113.3 L918.3 121.3 L924.1 83.4 L929.9 85.6 L935.7 106.0 L941.4 126.5 L947.2 127.5 L953.0 126.4 L958.8 96.0 L964.5 93.2 L970.3 117.3 L976.1 146.7 L981.9 136.9 L987.6 115.4 L993.4 94.1 L999.2 86.0 L1000 160 L0 160 Z"/>
+                <path class="line" d="M0.0 118.2 L5.8 135.2 L11.6 118.6 L17.3 103.6 L23.1 88.6 L28.9 97.2 L34.7 122.2 L40.4 126.6 L46.2 138.7 L52.0 133.6 L57.8 128.9 L63.5 97.0 L69.3 102.8 L75.1 123.2 L80.9 121.0 L86.6 100.1 L92.4 122.1 L98.2 131.8 L104.0 122.2 L109.7 97.5 L115.5 97.0 L121.3 108.3 L127.1 117.0 L132.8 102.2 L138.6 105.0 L144.4 120.8 L150.2 83.2 L155.9 65.6 L161.7 109.0 L167.5 103.5 L173.3 77.5 L179.0 78.5 L184.8 112.7 L190.6 120.3 L196.4 90.7 L202.1 84.9 L207.9 97.8 L213.7 100.1 L219.5 111.7 L225.3 94.5 L231.0 35.1 L236.8 90.9 L242.6 109.0 L248.4 110.9 L254.1 115.0 L259.9 114.0 L265.7 122.8 L271.5 105.5 L277.2 113.5 L283.0 97.8 L288.8 107.3 L294.6 69.5 L300.3 76.8 L306.1 119.9 L311.9 95.2 L317.7 82.2 L323.4 94.6 L329.2 51.5 L335.0 83.7 L340.8 113.0 L346.5 100.8 L352.3 104.3 L358.1 81.8 L363.9 74.5 L369.6 120.4 L375.4 128.2 L381.2 115.9 L387.0 94.7 L392.7 93.0 L398.5 98.8 L404.3 116.0 L410.1 116.8 L415.8 100.9 L421.6 81.4 L427.4 82.4 L433.2 88.6 L439.0 106.3 L444.7 108.1 L450.5 97.9 L456.3 101.2 L462.1 98.2 L467.8 103.1 L473.6 99.5 L479.4 93.1 L485.2 83.1 L490.9 107.2 L496.7 97.5 L502.5 91.2 L508.3 95.5 L514.0 105.4 L519.8 117.9 L525.6 112.6 L531.4 102.7 L537.1 117.0 L542.9 122.0 L548.7 90.6 L554.5 99.0 L560.2 113.5 L566.0 108.6 L571.8 138.9 L577.6 130.2 L583.3 84.2 L589.1 118.2 L594.9 145.2 L600.7 132.2 L606.4 73.7 L612.2 109.4 L618.0 130.2 L623.8 121.0 L629.5 86.0 L635.3 94.6 L641.1 88.5 L646.9 84.7 L652.7 126.3 L658.4 139.0 L664.2 116.6 L670.0 110.0 L675.8 135.7 L681.5 123.5 L687.3 80.2 L693.1 95.2 L698.9 117.4 L704.6 110.3 L710.4 111.7 L716.2 112.4 L722.0 116.0 L727.7 107.6 L733.5 91.3 L739.3 93.7 L745.1 112.7 L750.8 132.1 L756.6 108.8 L762.4 106.4 L768.2 138.3 L773.9 129.0 L779.7 120.4 L785.5 120.9 L791.3 128.0 L797.0 125.1 L802.8 119.7 L808.6 119.5 L814.4 96.6 L820.1 96.5 L825.9 114.8 L831.7 136.1 L837.5 136.6 L843.2 138.7 L849.0 144.9 L854.8 131.0 L860.6 128.2 L866.4 130.7 L872.1 130.6 L877.9 133.2 L883.7 131.2 L889.5 115.0 L895.2 132.2 L901.0 132.3 L906.8 113.9 L912.6 113.3 L918.3 121.3 L924.1 83.4 L929.9 85.6 L935.7 106.0 L941.4 126.5 L947.2 127.5 L953.0 126.4 L958.8 96.0 L964.5 93.2 L970.3 117.3 L976.1 146.7 L981.9 136.9 L987.6 115.4 L993.4 94.1 L999.2 86.0"/>
+                <line class="pk" x1="157.4" y1="0" x2="157.4" y2="160"/>
+                <line class="pk" x1="235.4" y1="0" x2="235.4" y2="160"/>
+                <line class="pk is-on" x1="333.5" y1="0" x2="333.5" y2="160"/>
+              </svg>
+              <div class="pick__marks"><span style="left: 15.7%">m14</span><span style="left: 23.5%">m1</span><span class="is-on" style="left: 33.4%">m7</span></div>
+            </div>
+            <div class="pick__edit"><i>"hook":</i> "POV: the GPS said “continue straight” 💀",
+<i>"in":</i> 53.8, <i>"impact":</i> 57.3, <i>"out":</i> 58.9,
+<i>"layout":</i> "frame", <i>"focusX":</i> 0.55,
+<i>"title":</i> "Recalculating… 😭"</div>
+            <div class="pick__grid"><img src="media/grid-m7.jpg" alt="" width="1200" height="345" loading="lazy"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="capture" style="--hm: 2" aria-labelledby="capture-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-4">
+          <h2 id="capture-h">Clipfarm pulls clips off your console</h2>
+          <p class="t-lead">Clipfarm checks how clips can reach this computer, walks you through the console settings, then copies each new clip into its inbox.</p>
+          <p>Xbox: automatic, through OneDrive.</p>
+          <p>PS5: one tap in the PlayStation App, or a USB drive.</p>
+          <p>PC: your Game Bar captures folder.</p>
+          <p><a class="link" href="https://github.com/VedSoni-dev/clipfarm#how-clips-get-from-your-console-to-your-computer">Read the setup steps</a></p>
+        </div>
+        <div class="frame frame--split span-6 start-7">
+          <div class="dg" data-diagram data-dg-still><script type="application/json">{"layout": "fanin", "alt": "Clips arrive from OneDrive for Xbox, the PlayStation App for PS5, Google Drive and iCloud Photos from a phone, and Game Bar on a PC, into the Clipfarm inbox, then Claude Code scans them.", "sources": [{"label": "OneDrive", "icon": "onedrive", "sub": "Xbox"}, {"label": "PlayStation App", "icon": "playstation", "sub": "PS5"}, {"label": "Google Drive", "icon": "google-drive", "sub": "Phone"}, {"label": "Game Bar", "icon": "windows", "sub": "PC"}], "target": {"label": "Clipfarm inbox", "icon": "ui:inbox"}, "then": {"label": "Claude Code", "icon": "claude-code", "meta": "scan"}}</script></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="punchline" data-moment="letters-assemble" aria-labelledby="punchline-h">
+    <div class="wrap">
+      <h2 class="mo-la__type" id="punchline-h">The clip is the punchline</h2>
+      <p class="mo-la__sub">In a study of 2,355 GTA Shorts, real gameplay clips got 1.6% likes per view, more than twice any other kind. So Clipfarm writes the joke's setup as the hook and lets your clip land it.</p>
+      <p class="mo-la__sub"><a class="link" href="https://github.com/VedSoni-dev/clipfarm/blob/main/skills/clipfarm/WHAT-WORKS.md">Read the study</a></p>
+    </div>
+  </section>
+
+  <section class="section ground-inverse" id="reels" aria-labelledby="reels-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="reels-h">Five reels from one run. <span class="muted">17 minutes of GTA V in, five loops out.</span></h2>
+        <p>Each opens on the action with the hook on screen, slows to half speed into the hit and cuts right after it, so it loops.</p>
+      </div>
+      <div class="reels" data-reels>
+        <video src="media/reel-1.mp4" poster="media/reel-1.jpg" muted loop playsinline preload="none" aria-label="Reel 1, a GTA V clip under the hook: POV: the GPS said “continue straight”"></video>
+        <video src="media/reel-2.mp4" poster="media/reel-2.jpg" muted loop playsinline preload="none" aria-label="Reel 2, a GTA V clip under the hook: “How was the drive?” Me:"></video>
+        <video src="media/reel-3.mp4" poster="media/reel-3.jpg" muted loop playsinline preload="none" aria-label="Reel 3, a GTA V clip under the hook: “Park anywhere, it's fine” Me:"></video>
+        <video src="media/reel-4.mp4" poster="media/reel-4.jpg" muted loop playsinline preload="none" aria-label="Reel 4, a GTA V clip under the hook: This will definitely work"></video>
+        <video src="media/reel-5.mp4" poster="media/reel-5.jpg" muted loop playsinline preload="none" aria-label="Reel 5, a GTA V clip under the hook: Every trucker after one energy drink:"></video>
+        <button class="loop-pause" type="button" aria-label="Pause the reels" title="Pause the reels"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3h2.2v10H4.5zM9.3 3h2.2v10H9.3z"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="post" aria-labelledby="post-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="post-h">Clipfarm fills in YouTube and Instagram</h2>
+        <div class="span-6 start-7 stack-4">
+          <p>Claude in Chrome uploads the reel in your own signed-in browser, writes the title, caption and hashtags, and stops before the last button. You press Publish.</p>
+          <p><a class="link" href="https://github.com/VedSoni-dev/clipfarm/blob/main/skills/clipfarm/POSTING.md">Read how posting works</a></p>
+        </div>
+      </div>
+      <div class="post-frame" role="img" aria-label="Reel 1 filled in on YouTube Studio and reel 3 on Instagram, each with its title or caption and hashtags, waiting for you to press Publish or Share">
+        <div class="upl" aria-hidden="true">
+          <div class="upl__bar"><img data-icon="youtube" src="assets/icons/youtube.svg" alt="">YouTube Studio<span class="sp"></span><small>Waiting for you</small><b class="upl__go">Publish</b></div>
+          <div class="upl__body">
+            <img class="thumb" src="media/reel-1.jpg" alt="" loading="lazy">
+            <div class="upl__fields">
+              <div class="upl__f"><small>Title</small><p>Recalculating… 😭</p></div>
+              <div class="upl__f"><small>Description</small><p>Followed the directions exactly. Where's the worst place your GPS has ever sent you?</p></div>
+              <div class="upl__f is-tags"><small>Hashtags</small><p>#GTAV #GTA5 #gaming #gtaclips</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="upl" aria-hidden="true">
+          <div class="upl__bar"><img data-icon="instagram" src="assets/icons/instagram.svg" alt="">Instagram<span class="sp"></span><small>Waiting for you</small><b class="upl__go">Share</b></div>
+          <div class="upl__body">
+            <img class="thumb" src="media/reel-3.jpg" alt="" loading="lazy">
+            <div class="upl__fields">
+              <div class="upl__f"><small>Share to</small><p>Reels and your feed</p></div>
+              <div class="upl__f"><small>Caption</small><p>Parallel parking is a skill. What's the worst parking job you've pulled off?</p></div>
+              <div class="upl__f is-tags"><small>Hashtags</small><p>#GTAV #GTA5 #gaming #gtaclips</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="local" data-moment="liquid-type" aria-labelledby="local-h">
+    <div class="wrap">
+      <h2 class="mo-lt__type" id="local-h">Clipfarm runs on your computer</h2>
+      <p class="t-lead measure">It edits with ffmpeg and Remotion on your own machine. Your footage leaves it only when you upload a reel.</p>
+      <div class="grid local-facts">
+        <p class="span-4 ic-point"><span class="ic-tile"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.670.9H18a2 2 0 0 1 2 2v2"/></svg></span><span>Every run lands in ~/Movies/Clipfarm: the report, the frame grids and the reels.</span></p>
+        <p class="span-4 ic-point"><span class="ic-tile"><img data-icon="claude-code" src="assets/icons/claude-code.svg" alt="" width="20" height="20"></span><span>The judging and the hooks run on your own Claude plan.</span></p>
+        <p class="span-4 ic-point"><span class="ic-tile"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></span><span>Posting needs no API keys and no developer accounts.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install" style="--hm: 2" aria-labelledby="install-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-4">
+          <h2 id="install-h">Install Clipfarm in two lines</h2>
+          <p class="t-lead">Paste the two lines into Claude Code, then ask for what you want in plain words.</p>
+          <p>Needs Node 20 or newer.</p>
+          <p>The first run installs Remotion and ffmpeg. The first render downloads a headless Chrome, about 140 MB.</p>
+          <p>Codex support is written but not tested yet.</p>
+        </div>
+        <div class="frame frame--split frame--lit inst-frame span-6 start-7">
+          <div class="term ui ui-term">
+            <div class="term__bar"><span class="term__dots"><i></i><i></i><i></i></span><span><b>Claude Code</b></span><span class="sp"></span><span>~</span></div>
+            <div class="inst">
+              <div class="inst__row"><code id="l1">/plugin marketplace add VedSoni-dev/clipfarm</code><button class="btn btn--secondary" type="button" data-copy="l1"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 10.5V3.8C3 3.1 3.6 2.5 4.3 2.5H11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>Copy line</span></button></div>
+              <div class="inst__row"><code id="l2">/plugin install clipfarm@clipfarm</code><button class="btn btn--secondary" type="button" data-copy="l2"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 10.5V3.8C3 3.1 3.6 2.5 4.3 2.5H11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>Copy line</span></button></div>
+              <p class="inst__note">Then ask in plain words, for example:</p>
+              <div class="inst__row"><code id="l3">Use clipfarm to connect my Xbox and PS5 clips and turn them into reels</code><button class="btn btn--secondary" type="button" data-copy="l3"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 10.5V3.8C3 3.1 3.6 2.5 4.3 2.5H11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>Copy line</span></button></div>
+              <div class="inst__ask">Use clipfarm: find the 3 best moments in today's GTA clips and make them into reels.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq" aria-labelledby="faq-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-4">
+          <h2 id="faq-h">Questions</h2>
+          <p class="muted">Short answers. The README on GitHub has the long ones.</p>
+          <p><a class="link link--icon" href="https://github.com/VedSoni-dev/clipfarm#readme"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>Read the README</a></p>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>Does Clipfarm get PS5 clips by itself?</h3><p>No. Sony only sends PS5 clips to your phone, so each one takes a tap in the PlayStation App. Copying clips to a USB drive works too.</p></div>
+          <div class="faq__item"><h3>Does Clipfarm only work with GTA?</h3><p>It was made for GTA 6 and works with any game. It skips cutscenes, menus and loading screens.</p></div>
+          <div class="faq__item"><h3>Can I earn money from these GTA reels?</h3><p>Rockstar's policy allows non-commercial fan videos without story spoilers, and does not cover making money from the footage.</p></div>
+          <div class="faq__item"><h3>Is Clipfarm free?</h3><p>Yes. It is open source under the MIT licence and runs on your own Claude plan.</p></div>
+          <div class="faq__item"><h3>Does Clipfarm work in Codex?</h3><p>The Codex plugin is written but not tested yet. Claude Code is the one that works today.</p></div>
+          <div class="faq__item"><h3>Will Clipfarm post without asking me?</h3><p>No. It fills in the upload and stops before Publish. Nothing goes up until you press it.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">Install Clipfarm in Claude Code</h2>
+        <p>Free and open source under the MIT licence. Version 0.2.0.</p>
+      </div>
+      <a class="btn btn--primary btn--xl btn--wide" href="#install">Install the plugin<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><span class="mark" data-mark="ring" aria-hidden="true"></span>Clipfarm</a>
+          <p class="footer__lede">Gameplay reels, cut on your own computer.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Report</h3><ul><li><a href="#run">Run report</a></li><li><a href="#punchline">The study</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Consoles</h3><ul><li><a href="#capture">Xbox, PS5, PC</a></li><li><a href="#post">Posting</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Reels</h3><ul><li><a href="#reels">Five reels</a></li><li><a href="#install">Install</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Questions</h3><ul><li><a href="#faq">Answers</a></li><li><a href="https://vedantsoni.com">More builds by Vedant</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Clipfarm. MIT licence. Not affiliated with Rockstar Games or Take-Two Interactive.</span>
+        <div class="socials"><a href="https://instagram.com/vedanttalksai" aria-label="Vedant on Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg></a><a href="https://github.com/VedSoni-dev/clipfarm" aria-label="Clipfarm on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></div>
+        <details class="credits"><summary>GTA V footage: Unlisted Thoughts (Internet Archive), public domain</summary>
+          <p>Every reel, frame grid and still on this page comes from GTA V gameplay recordings by Unlisted Thoughts, published on the Internet Archive as public domain. Grand Theft Auto is a trademark of Take-Two Interactive. Product names and logos are trademarks of their owners.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module" src="assets/diagrams/mount.js"></script>
+<script type="module">
+  // the reels play while on screen (never under reduced motion), and the one pause button holds all five
+  const box = document.querySelector('[data-reels]');
+  const vids = [...box.querySelectorAll('video')];
+  const btn = box.querySelector('.loop-pause');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let paused = still;
+  const PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 3h2.2v10H4.5zM9.3 3h2.2v10H9.3z"/></svg>';
+  const PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.25 3.7v8.6c0 .62.68 1 1.2.66l6.5-4.3c.47-.31.47-1 0-1.32l-6.5-4.3c-.52-.34-1.2.04-1.2.66Z"/></svg>';
+  let seen = false;
+  const sync = () => vids.forEach(v => { if (!paused && seen && v.offsetParent) v.play().catch(() => {}); else v.pause(); });
+  new IntersectionObserver(es => { seen = es.some(e => e.isIntersecting); sync(); }, { rootMargin: '120px' }).observe(box);
+  btn.addEventListener('click', () => {
+    paused = !paused; sync();
+    btn.innerHTML = paused ? PLAY : PAUSE;
+    btn.setAttribute('aria-label', paused ? 'Play the reels' : 'Pause the reels');
+    btn.title = btn.getAttribute('aria-label');
+  });
+  if (still) { btn.innerHTML = PLAY; btn.setAttribute('aria-label', 'Play the reels'); btn.title = 'Play the reels'; }
+  // copy buttons: the line goes to the clipboard and the label says so for a moment
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    const text = document.getElementById(b.dataset.copy).textContent;
+    const label = b.querySelector('span');
+    try { await navigator.clipboard.writeText(text); label.textContent = 'Copied'; }
+    catch { label.textContent = 'Select and copy'; }
+    setTimeout(() => { label.textContent = 'Copy line'; }, 1600);
+  }));
+</script>
+</body>
+</html>
