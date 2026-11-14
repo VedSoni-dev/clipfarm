@@ -1,6 +1,6 @@
 ---
 name: clipfarm
-description: Turns gameplay captures into vertical clips for Reels, Shorts and TikTok. Finds the best moments in Xbox, PS5 or PC recordings (made for GTA 6, works with any game), edits them with Remotion (slow push-in, punch-in and half speed on the payoff, a hook on a white card), and hands posting to Instagram and YouTube to Claude in Chrome. Use when someone wants to clip, edit or post gameplay ("find my best moments", "make clips from my GTA footage", "turn my captures into reels", "/clipfarm").
+description: Turns gameplay captures into vertical clips for Reels, Shorts and TikTok, and connects an Xbox or PS5 so its clips reach this computer. Finds the best moments in Xbox, PS5 or PC recordings (made for GTA 6, works with any game), edits them with Remotion (slow push-in, punch-in and half speed on the payoff, a hook on a white card), and hands posting to Instagram and YouTube to Claude in Chrome. Use when someone wants to clip, edit or post gameplay, or connect a console to it ("connect my Xbox", "get my PS5 clips onto my laptop", "find my best moments", "make clips from my GTA footage", "turn my captures into reels", "/clipfarm").
 ---
 
 # Clipfarm
@@ -9,11 +9,14 @@ You find the moments, judge them with your own eyes, and write the edit. The eng
 and the rendering. `ENGINE` below means the `engine/` folder in this skill's base directory (the folder this
 SKILL.md is in); use its absolute path in commands.
 
-The whole flow, start to finish: install once → scan → look at the frame grids and pick → write `edit.json` →
-render → read the check images and fix → show the user → post only if they ask.
+The whole flow, start to finish: install once → connect the console (once) → scan → look at the frame grids and
+pick → write `edit.json` → render → read the check images and fix → show the user → post only if they ask.
 
 ## 0. First run (once)
-Skip this if `ENGINE/node_modules` already exists.
+Skip this if `ENGINE/node_modules` already exists. **In Codex:** its sandbox blocks the network and writes outside
+the project, so `npm install`, the Clipfarm folder in Movies/Videos, the Photos source and the render's headless
+Chrome each need the user to approve running outside the sandbox. If they'd rather not, set `CLIPFARM_HOME` to a
+folder inside the project and use the Downloads or USB sources instead of Photos.
 ```bash
 cd ENGINE && npm install
 ```
@@ -21,18 +24,42 @@ That installs Remotion and a bundled ffmpeg (a system ffmpeg is used when there 
 downloads a headless Chrome (about 140 MB, once). Remotion is free for individuals and companies of up to
 3 people; bigger companies need a Remotion licence.
 
-## 1. Get the clips onto this computer
-The scan looks in the Clipfarm inbox (`~/Movies/Clipfarm/inbox` on a Mac, `~/Videos/Clipfarm/inbox` on Windows)
-and in OneDrive's `Videos` folder. Only ask where the clips are if the scan finds nothing. If they ask how to set it up:
+## 1. Connect the console and get the clips
+Start with `node ENGINE/bin/clips.mjs`. It lists every place clips can reach this computer: ✓ connected,
+· found but switched off, ✗ not set up here. The scan pulls from every connected source on its own, into the Clipfarm
+inbox (`~/Movies/Clipfarm/inbox` on a Mac, `~/Videos/Clipfarm/inbox` on Windows); `clips.mjs --pull` does it any time.
 
-- **Xbox Series X|S:** Settings → Preferences → Capture & share → Automatic uploads → OneDrive. New clips go to
-  OneDrive's `Videos` folder, which syncs to this computer. Record at 1080p SDR: 4K or HDR clips may not upload
-  automatically. To capture: press the Xbox button, then X (saves the last 30 s; make it longer in Capture & share).
-- **PS5:** link the console to the PlayStation App, then Settings → Captures and Broadcasts → Captures → Auto-Upload
-  (Rest Mode needs "Stay connected to the internet"). In the PS App: Game Captures → select → Download (they're kept
-  14 days). AirDrop, Nearby Share, iCloud or Google Photos them into the inbox, or copy them from the PS5's Media
-  Gallery to a USB drive. To capture: Create button → Save Recent Gameplay.
-- **PC:** point the scan at the capture folder (Xbox Game Bar saves to `~/Videos/Captures`; OBS and NVIDIA have their own).
+When they say "connect my Xbox" or "connect my PS5", or nothing is connected yet, walk them through it one step at a
+time and wait for each step before the next. Finish by proving it works: run `node ENGINE/bin/clips.mjs --wait`, ask
+them to save a clip on the console, and tell them when it prints `NEW <file>` (that's their clip on this computer).
+
+**Xbox Series X|S (automatic once set up):**
+1. On this computer: the OneDrive app, signed in with the Microsoft account the Xbox uses (built into Windows; on a
+   Mac it's "OneDrive" in the App Store). Ask before installing anything.
+2. On the Xbox: Settings → Preferences → Capture & share → automatically upload → OneDrive (labels vary a little by
+   console version). Set game clip resolution to 1080p SDR: 4K and HDR clips don't auto-upload.
+3. To save a clip: press the Xbox button, then X (the last 30 s). New clips land in OneDrive's `Videos` folder a few
+   minutes later, and Clipfarm picks them up from there.
+
+**PS5 (one tap per clip, because Sony only sends clips to the phone):**
+1. On the PS5: Settings → Captures and Broadcasts → Captures → Auto-Upload on, and link the console to the
+   PlayStation App on their phone. Rest mode needs "Stay Connected to the Internet". Clips must be under 3 minutes
+   and not 4K, and stay in the app for 14 days.
+2. Ask how their phone reaches this computer, and switch that source on with `--use`:
+   - iPhone and a Mac with iCloud Photos: `--use photos` (macOS asks once to let you control Photos).
+   - iPhone and a Mac without it: AirDrop, which lands in Downloads: `--use downloads`.
+   - Android, or Windows: the Google Drive app (`--use gdrive`), or Quick Share / a cable into Downloads
+     (`--use downloads`).
+3. In the PlayStation App: Game Library → Captures → the clip → Download (it saves to the phone; AirDrop it next if
+   that's their route). To save a clip on the PS5: Create button → Save Recent Gameplay.
+
+**Either console, no setup:** copy clips to a USB drive (PS5: Media Gallery → select → Copy to USB) and plug it in
+here; a drive with a `PS5/CREATE` folder is picked up automatically. **PC:** pass the capture folder to the scan
+(Game Bar's `Videos\Captures` is picked up automatically on Windows; OBS and NVIDIA have their own).
+
+Only landscape, 16:9 videos of 720p or more count as game clips, and from Photos only .mp4 files without a location
+(the phone's own camera records .mov with one), so their personal videos stay where they are. Clips are copied,
+never moved.
 
 ## 2. Scan
 ```bash

@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "clipfarm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn gameplay captures into vertical clips: finds the best moments in your Xbox, PS5 or PC recordings and edits them with Remotion. Made for GTA 6, works with any game."
 }

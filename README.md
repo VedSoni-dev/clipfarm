@@ -28,26 +28,38 @@ plugin format but hasn't been tested yet; if something breaks, open an issue.)
 The first run installs the editor (Remotion and ffmpeg) and, on the first render, a headless Chrome (about 140 MB). Node 20 or newer.
 
 ## Use it
+First, once:
+```
+Use clipfarm to connect my Xbox
+```
+(or "connect my PS5"). It checks this computer, walks you through the console settings, then waits while you save a
+clip and tells you when it lands. After that:
 ```
 Use clipfarm: find the 3 best moments in today's GTA clips and make them into reels.
 ```
-or just say "make clips from my GTA footage". It scans, looks at each moment, writes the edit, renders, checks
-its own frames and opens a report with the finished clips and their captions. Then, if you want:
+It pulls in your new clips, scans them, looks at each moment, writes the edit, renders, checks its own frames and
+opens a report with the finished clips and their captions. Then, if you want:
 ```
 post clip 1 to my Instagram and YouTube. Show me before you press Share.
 ```
 
-## Getting clips from your console
-| | How | Then |
+## How clips get from your console to your computer
+| | Set up once | Then |
 |---|---|---|
-| **Xbox Series X\|S** | Settings → Preferences → Capture & share → Automatic uploads → OneDrive. Record at 1080p SDR (4K/HDR clips may not upload automatically). | Clips land in OneDrive's `Videos` folder, which syncs to your computer. Clipfarm looks there by itself. |
-| **PS5** | Link the console to the PlayStation App, then Settings → Captures and Broadcasts → Captures → Auto-Upload. | In the PS App, download the clips (they're kept 14 days), then AirDrop or sync them into `~/Movies/Clipfarm/inbox`. Or use a USB drive. |
-| **PC** | Any recorder (Xbox Game Bar, OBS, NVIDIA). | Point Clipfarm at the folder. |
+| **Xbox Series X\|S** | OneDrive app on your computer, and on the Xbox: Settings → Preferences → Capture & share → upload to OneDrive. Record at 1080p SDR (4K/HDR clips don't auto-upload). | Automatic. Every clip you save lands in OneDrive's `Videos` folder and Clipfarm pulls it in. |
+| **PS5** | Settings → Captures and Broadcasts → Captures → Auto-Upload, with the console linked to the PlayStation App. | One tap: download the clip in the PlayStation App. With iCloud Photos on a Mac it arrives by itself; otherwise AirDrop it, or use Google Drive. Clipfarm pulls it in. |
+| **Either** | Nothing. | Copy clips to a USB drive (PS5: Media Gallery → Copy to USB) and plug it in. |
+| **PC** | Any recorder (Xbox Game Bar, OBS, NVIDIA). | Point Clipfarm at the folder (Game Bar's is found automatically on Windows). |
 
-Capture the moment right after it happens: Xbox button then X on Xbox, Create → Save Recent Gameplay on PS5.
+`node skills/clipfarm/engine/bin/clips.mjs` shows what's connected. Only landscape 16:9 game-size videos are picked
+up, so your personal videos stay where they are, and clips are copied, never moved. Sony only sends PS5 clips to
+your phone, which is why the PS5 needs that one tap.
+
+Save the moment right after it happens: Xbox button then X on Xbox, Create → Save Recent Gameplay on PS5.
 
 ## How it works
-1. **Listen and skim** (`engine/bin/scan.mjs`). ffmpeg scores every half second of every video: sudden loudness
+1. **Pull in and listen** (`engine/bin/clips.mjs`, `engine/bin/scan.mjs`). New clips are copied in from OneDrive,
+   your phone's transfers and USB drives. Then ffmpeg scores every half second of every video: sudden loudness
    (crashes, gunfire, explosions, you yelling), overall loudness and how much the picture changes. Black-bar
    stretches (cutscenes) and black frames are dropped. The best peaks become moments, each with a grid of 8 frames.
 2. **Judge** (the AI). Claude or ChatGPT looks at every grid: real action that's readable on a phone, no menus, no

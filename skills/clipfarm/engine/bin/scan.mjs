@@ -4,11 +4,12 @@
 //
 //   node bin/scan.mjs [files or folders…] [--since 48] [--top 10] [--out <dir>] [--pre 6] [--post 3]
 //
-// With no paths it scans the Clipfarm inbox (~/Movies/Clipfarm on a Mac) and the OneDrive Videos folder that
-// Xbox auto-uploads to.
+// With no paths it first pulls new clips from every connected source into the Clipfarm inbox (Xbox → OneDrive,
+// USB drives, and the phone sources switched on with bin/clips.mjs), then scans the inbox.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import { consoleFolders, findVideos, probe, run, workspace } from '../lib/ff.mjs';
+import { findVideos, probe, run, workspace } from '../lib/ff.mjs';
+import { pull } from '../lib/sources.mjs';
 import { writeReport } from '../lib/report.mjs';
 
 const BIN = 0.5; // seconds per score bin
@@ -33,13 +34,19 @@ for (let i = 0; i < argv.length; i++) {
 const home = workspace();
 const inbox = join(home, 'inbox');
 mkdirSync(inbox, { recursive: true });
-const sources = paths.length ? paths : [inbox, ...consoleFolders()];
+if (!paths.length) {
+  try {
+    const got = pull({ sinceHours: opt.since || 72, log: (l) => log(l) });
+    if (got.length) log(`Pulled ${got.length} new clip${got.length > 1 ? 's' : ''} into the inbox.`);
+  } catch (e) { log(`(Couldn't pull new clips: ${e.message})`); }
+}
+const sources = paths.length ? paths : [inbox];
 const runDir = resolve(opt.out || join(home, 'runs', stamp()));
 const files = findVideos(sources, { sinceHours: opt.since, skip: [join(home, 'runs')] }).slice(0, opt.maxFiles);
 
 if (!files.length) {
   console.log(JSON.stringify({ ok: false, reason: 'no videos found', looked_in: sources }, null, 2));
-  console.error(`\nNo gameplay videos found. Drop clips into ${inbox} (or pass a folder), then run this again.`);
+  console.error(`\nNo gameplay videos found. Run bin/clips.mjs to see what's connected, drop clips into ${inbox}, or pass a folder.`);
   process.exit(2);
 }
 

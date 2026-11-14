@@ -1,7 +1,7 @@
 // ffmpeg helpers: find a binary, probe a file, run a filter graph and stream its printed metadata.
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { homedir, platform } from 'node:os';
 import { join, extname, resolve } from 'node:path';
 
@@ -90,16 +90,4 @@ export function findVideos(paths, { sinceHours, skip = [] } = {}) {
 export function workspace() {
   if (process.env.CLIPFARM_HOME) return resolve(process.env.CLIPFARM_HOME);
   return join(homedir(), platform() === 'darwin' ? 'Movies' : 'Videos', 'Clipfarm');
-}
-
-/** Folders a console syncs captures to on this computer (Xbox → OneDrive), if they exist. */
-export function consoleFolders() {
-  const home = homedir();
-  const found = [];
-  const cloud = join(home, 'Library', 'CloudStorage');
-  if (existsSync(cloud)) {
-    for (const name of readdirSync(cloud)) if (name.startsWith('OneDrive')) found.push(join(cloud, name, 'Videos'));
-  }
-  for (const name of ['OneDrive', 'OneDrive - Personal']) found.push(join(home, name, 'Videos'));
-  return found.filter((p) => existsSync(p));
 }
